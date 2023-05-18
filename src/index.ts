@@ -5,6 +5,7 @@ import { storage } from "./utils/upload-audio";
 import cors from "cors";
 import { transcribe } from "./openai";
 import fetch from "node-fetch";
+import fs from "fs";
 
 dotenv.config();
 
@@ -25,10 +26,8 @@ app.post(
         return;
       }
 
-      console.log("Transcribing ...");
       const transcription = await transcribe(file.path);
 
-      console.log("Summarizing ...");
       const response = await fetch(
         "https://api.openai.com/v1/chat/completions",
         {
@@ -56,6 +55,12 @@ app.post(
 
       const summary: any = await response.json();
 
+      fs.unlink(file.path, (err) => {
+        if (err) {
+          console.error("Error deleting the file ", err);
+        }
+      });
+
       res.json({ summary });
     } catch (error) {
       console.log(error.message);
@@ -67,7 +72,6 @@ app.post(
 );
 
 app.get("/", (_, res: Response) => {
-  console.log("Request received!");
   res.send("SummarEase API up and running! ⚡️");
 });
 
