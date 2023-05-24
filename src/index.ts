@@ -1,3 +1,4 @@
+import http from "http";
 import express, { Express, Request, Response } from "express";
 import dotenv from "dotenv";
 import multer from "multer";
@@ -6,12 +7,32 @@ import cors from "cors";
 import { transcribe } from "./openai";
 import fetch from "node-fetch";
 import fs from "fs";
+import { socketsInit } from "./sockets-init";
+import { Server, Socket } from "socket.io";
 
 dotenv.config();
 
 const app: Express = express();
 app.use(cors());
+
+const server = http.createServer(app);
+
 const port = process.env.PORT;
+
+const sockets = new Map<string, Socket>();
+
+const updateSocketIds = (socketId: string, socket: Socket) => {
+  sockets.set(socketId, socket);
+};
+
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
+
+socketsInit(io, updateSocketIds);
 
 const upload = multer({ storage });
 
@@ -19,6 +40,7 @@ app.post(
   "/api/upload-audio",
   upload.single("audio"),
   async (req: Request, res: Response) => {
+    const currentSocketId = req.body.socketId;
     try {
       const file = req.file;
       if (!file) {
@@ -28,6 +50,7 @@ app.post(
 
       const transcription = await transcribe(file.path);
 
+      sockets.get(currentSocketId).emit("status-changed", 1);
       const response = await fetch(
         "https://api.openai.com/v1/chat/completions",
         {
@@ -75,6 +98,6 @@ app.get("/", (_, res: Response) => {
   res.send("SummarEase API up and running! ⚡️");
 });
 
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`Server is running at port ${port}`);
 });
