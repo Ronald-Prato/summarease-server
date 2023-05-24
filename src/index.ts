@@ -53,7 +53,7 @@ app.post(
         }
       );
 
-      const summary: any = await response.json();
+      const data: any = await response.json();
 
       fs.unlink(file.path, (err) => {
         if (err) {
@@ -61,7 +61,7 @@ app.post(
         }
       });
 
-      res.json({ summary });
+      res.json({ summary: data.choices[0].message.content });
     } catch (error) {
       console.log(error.message);
       res
