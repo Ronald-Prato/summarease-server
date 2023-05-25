@@ -37,7 +37,7 @@ socketsInit(io, updateSocketIds);
 const upload = multer({ storage });
 
 app.post(
-  "/api/upload-audio",
+  "/upload-audio",
   upload.single("audio"),
   async (req: Request, res: Response) => {
     const currentSocketId = req.body.socketId;
