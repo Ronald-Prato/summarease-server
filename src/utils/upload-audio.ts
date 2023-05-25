@@ -5,6 +5,6 @@ export const storage = multer.diskStorage({
     cb(null, file.originalname);
   },
   destination: function (_, __, cb) {
-    cb(null, `${__dirname}/../audios`);
+    cb(null, `${__dirname}/../../audios`);
   },
 });
